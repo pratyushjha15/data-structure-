@@ -475,3 +475,454 @@ return dummy.next;
 }
 
 ----------------------------------------------------------------------------------------------------------------------------
+
+stack 
+
+
+q1)
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Function to compute prefix sums for a given stack
+void computePrefixSums(int *stack, int size, long *prefixSums) {
+    prefixSums[0] = stack[0];
+    for (int i = 1; i < size; i++) {
+        prefixSums[i] = prefixSums[i - 1] + stack[i];
+    }
+}
+
+// Function to find the maximum number of elements Nick can remove
+int twoStacks(int maxSum, int *a, int n, int *b, int m) {
+    long *prefix_a = (long *)malloc(n * sizeof(long));
+    long *prefix_b = (long *)malloc(m * sizeof(long));
+    
+    // Compute prefix sums for both stacks
+    computePrefixSums(a, n, prefix_a);
+    computePrefixSums(b, m, prefix_b);
+    
+    int maxElements = 0;
+    int j = m - 1; // Pointer for stack b's prefix sums
+
+    // Iterate over stack a's prefix sums
+    for (int i = 0; i < n; i++) {
+        // Move j pointer to ensure the sum is within the maxSum
+        while (j >= 0 && prefix_a[i] + prefix_b[j] > maxSum) {
+            j--;
+        }
+        // If j is not negative, it means prefix_a[i] + prefix_b[j] <= maxSum
+        if (j >= 0) {
+            maxElements = (i + 1) + (j + 1) > maxElements ? (i + 1) + (j + 1) : maxElements;
+        }
+    }
+
+    free(prefix_a);
+    free(prefix_b);
+    
+    return maxElements;
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+
+    while (t--) {
+        int n, m, maxSum;
+        scanf("%d %d %d", &n, &m, &maxSum);
+
+        int *a = (int *)malloc(n * sizeof(int));
+        int *b = (int *)malloc(m * sizeof(int));
+
+        for (int i = 0; i < n; i++) {
+            scanf("%d", &a[i]);
+        }
+
+        for (int i = 0; i < m; i++) {
+            scanf("%d", &b[i]);
+        }
+
+        printf("%d\n", twoStacks(maxSum, a, n, b, m));
+
+        free(a);
+        free(b);
+    }
+
+    return 0;
+}
+
+
+q2)
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>  // Include this for strcspn
+
+#define MAX_SIZE 100000
+
+typedef struct {
+    int *data;
+    int top;
+} Stack;
+
+// Function to initialize a stack
+void initStack(Stack *stack) {
+    stack->data = (int *)malloc(MAX_SIZE * sizeof(int));
+    stack->top = -1;
+}
+
+// Function to push an element onto the stack
+void push(Stack *stack, int value) {
+    stack->data[++(stack->top)] = value;
+}
+
+// Function to pop an element from the stack
+int pop(Stack *stack) {
+    return stack->data[(stack->top)--];
+}
+
+// Function to get the top element of the stack
+int peek(Stack *stack) {
+    return stack->data[stack->top];
+}
+
+// Function to check if the stack is empty
+int isEmpty(Stack *stack) {
+    return stack->top == -1;
+}
+
+// Function to handle the operations and get the maximum value
+void getMax(int n, char *operations[]) {
+    Stack stack, maxStack;
+    initStack(&stack);
+    initStack(&maxStack);
+
+    for (int i = 0; i < n; i++) {
+        int op, x;
+        sscanf(operations[i], "%d %d", &op, &x);
+        if (op == 1) {  // Push operation
+            push(&stack, x);
+            if (isEmpty(&maxStack)) {
+                push(&maxStack, x);
+            } else {
+                int maxVal = peek(&maxStack);
+                push(&maxStack, x > maxVal ? x : maxVal);
+            }
+        } else if (op == 2) {  // Pop operation
+            if (!isEmpty(&stack)) {
+                pop(&stack);
+                pop(&maxStack);
+            }
+        } else if (op == 3) {  // Print maximum operation
+            if (!isEmpty(&maxStack)) {
+                printf("%d\n", peek(&maxStack));
+            }
+        }
+    }
+
+    // Free allocated memory
+    free(stack.data);
+    free(maxStack.data);
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    getchar(); // Consume the newline character
+
+    char *operations[n];
+    for (int i = 0; i < n; i++) {
+        operations[i] = (char *)malloc(100 * sizeof(char));
+        fgets(operations[i], 100, stdin);
+        // Remove the newline character if present
+        operations[i][strcspn(operations[i], "\n")] = '\0';
+    }
+
+    getMax(n, operations);
+
+    // Free allocated memory
+    for (int i = 0; i < n; i++) {
+        free(operations[i]);
+    }
+
+    return 0;
+}
+
+
+
+q3)
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define a maximum size for the stack heights (adjust as needed)
+#define MAX_SIZE 100000
+
+// Function to compute cumulative heights from bottom to top
+void computeCumulativeHeights(int *heights, int count, int *cumulativeHeights) {
+    int total = 0;
+    for (int i = count - 1; i >= 0; i--) {
+        total += heights[i];
+        cumulativeHeights[i] = total;
+    }
+}
+
+// Function to find the maximum possible height where all stacks can be equal
+int equalStacks(int *h1, int n1, int *h2, int n2, int *h3, int n3) {
+    int cumulative1[MAX_SIZE], cumulative2[MAX_SIZE], cumulative3[MAX_SIZE];
+    int i, j;
+    int maxHeight = 0;
+
+    // Compute cumulative heights
+    computeCumulativeHeights(h1, n1, cumulative1);
+    computeCumulativeHeights(h2, n2, cumulative2);
+    computeCumulativeHeights(h3, n3, cumulative3);
+
+    // Use a set to store heights from the first stack
+    int *set = (int *)malloc(MAX_SIZE * sizeof(int));
+    int setSize = 0;
+
+    for (i = 0; i < n1; i++) {
+        set[setSize++] = cumulative1[i];
+    }
+
+    // Find the maximum height that is common in all three stacks
+    for (i = 0; i < n2; i++) {
+        for (j = 0; j < setSize; j++) {
+            if (cumulative2[i] == set[j]) {
+                for (int k = 0; k < n3; k++) {
+                    if (cumulative3[k] == cumulative2[i]) {
+                        if (cumulative2[i] > maxHeight) {
+                            maxHeight = cumulative2[i];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    free(set);
+    return maxHeight;
+}
+
+int main() {
+    int n1, n2, n3;
+    scanf("%d %d %d", &n1, &n2, &n3);
+
+    int *h1 = (int *)malloc(n1 * sizeof(int));
+    int *h2 = (int *)malloc(n2 * sizeof(int));
+    int *h3 = (int *)malloc(n3 * sizeof(int));
+
+    for (int i = 0; i < n1; i++) {
+        scanf("%d", &h1[i]);
+    }
+
+    for (int i = 0; i < n2; i++) {
+        scanf("%d", &h2[i]);
+    }
+
+    for (int i = 0; i < n3; i++) {
+        scanf("%d", &h3[i]);
+    }
+
+    printf("%d\n", equalStacks(h1, n1, h2, n2, h3, n3));
+
+    free(h1);
+    free(h2);
+    free(h3);
+
+    return 0;
+}
+
+
+q4)
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_STACK_SIZE 100000
+
+// Define a stack structure
+typedef struct {
+    char *data;
+    int top;
+    int capacity;
+} Stack;
+
+// Initialize the stack
+void initStack(Stack *stack, int capacity) {
+    stack->capacity = capacity;
+    stack->top = -1;
+    stack->data = (char *)malloc(capacity * sizeof(char));
+}
+
+// Push to stack
+void push(Stack *stack, char value) {
+    if (stack->top < stack->capacity - 1) {
+        stack->data[++(stack->top)] = value;
+    }
+}
+
+// Pop from stack
+char pop(Stack *stack) {
+    if (stack->top >= 0) {
+        return stack->data[(stack->top)--];
+    }
+    return '\0'; // Return null character if stack is empty
+}
+
+// Peek top of stack
+char peek(Stack *stack) {
+    if (stack->top >= 0) {
+        return stack->data[stack->top];
+    }
+    return '\0'; // Return null character if stack is empty
+}
+
+// Check if stack is empty
+int isEmpty(Stack *stack) {
+    return stack->top == -1;
+}
+
+// Function to check if the bracket string is balanced
+char *isBalanced(const char *s) {
+    Stack stack;
+    initStack(&stack, strlen(s));
+    
+    for (int i = 0; s[i] != '\0'; i++) {
+        char c = s[i];
+        if (c == '(' || c == '{' || c == '[') {
+            push(&stack, c);
+        } else {
+            if (isEmpty(&stack)) {
+                free(stack.data);
+                return "NO";
+            }
+            char top = pop(&stack);
+            if ((c == ')' && top != '(') ||
+                (c == '}' && top != '{') ||
+                (c == ']' && top != '[')) {
+                free(stack.data);
+                return "NO";
+            }
+        }
+    }
+    
+    if (isEmpty(&stack)) {
+        free(stack.data);
+        return "YES";
+    } else {
+        free(stack.data);
+        return "NO";
+    }
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    getchar(); // Consume the newline character after the integer input
+
+    for (int i = 0; i < n; i++) {
+        char s[100000];
+        fgets(s, sizeof(s), stdin);
+        // Remove newline character if present
+        s[strcspn(s, "\n")] = '\0';
+        
+        printf("%s\n", isBalanced(s));
+    }
+
+    return 0;
+}
+
+
+
+q5) 
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define a stack structure
+typedef struct {
+    int *data;
+    int top;
+    int capacity;
+} Stack;
+
+// Initialize stack
+void initStack(Stack *stack, int capacity) {
+    stack->capacity = capacity;
+    stack->top = -1;
+    stack->data = (int *)malloc(capacity * sizeof(int));
+}
+
+// Push to stack
+void push(Stack *stack, int value) {
+    stack->data[++(stack->top)] = value;
+}
+
+// Pop from stack
+int pop(Stack *stack) {
+    return stack->data[(stack->top)--];
+}
+
+// Peek top of stack
+int peek(Stack *stack) {
+    return stack->data[stack->top];
+}
+
+// Check if stack is empty
+int isEmpty(Stack *stack) {
+    return stack->top == -1;
+}
+
+// Function to calculate the largest rectangle area
+long largestRectangle(int *h, int n) {
+    Stack stack;
+    initStack(&stack, n);
+    long maxArea = 0;
+    int i = 0;
+
+    while (i < n) {
+        if (isEmpty(&stack) || h[i] >= h[peek(&stack)]) {
+            push(&stack, i++);
+        } else {
+            int topIndex = pop(&stack);
+            long height = h[topIndex];
+            long width = isEmpty(&stack) ? i : i - peek(&stack) - 1;
+            long area = height * width;
+            if (area > maxArea) {
+                maxArea = area;
+            }
+        }
+    }
+
+    while (!isEmpty(&stack)) {
+        int topIndex = pop(&stack);
+        long height = h[topIndex];
+        long width = isEmpty(&stack) ? i : i - peek(&stack) - 1;
+        long area = height * width;
+        if (area > maxArea) {
+            maxArea = area;
+        }
+    }
+
+    free(stack.data);
+    return maxArea;
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    
+    int *heights = (int *)malloc(n * sizeof(int));
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &heights[i]);
+    }
+
+    printf("%ld\n", largestRectangle(heights, n));
+
+    free(heights);
+    return 0;
+}
