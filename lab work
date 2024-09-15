@@ -653,84 +653,62 @@ int main() {
 
 q3)
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <algorithm>
 
-// Define a maximum size for the stack heights (adjust as needed)
-#define MAX_SIZE 100000
+using namespace std;
 
-// Function to compute cumulative heights from bottom to top
-void computeCumulativeHeights(int *heights, int count, int *cumulativeHeights) {
-    int total = 0;
-    for (int i = count - 1; i >= 0; i--) {
-        total += heights[i];
-        cumulativeHeights[i] = total;
-    }
-}
 
-// Function to find the maximum possible height where all stacks can be equal
-int equalStacks(int *h1, int n1, int *h2, int n2, int *h3, int n3) {
-    int cumulative1[MAX_SIZE], cumulative2[MAX_SIZE], cumulative3[MAX_SIZE];
-    int i, j;
-    int maxHeight = 0;
+int equalStacks(vector<int> h1, vector<int> h2, vector<int> h3) {
+    
+    int h1Sum = accumulate(h1.begin(), h1.end(), 0);
+    int h2Sum = accumulate(h2.begin(), h2.end(), 0);
+    int h3Sum = accumulate(h3.begin(), h3.end(), 0);
 
-    // Compute cumulative heights
-    computeCumulativeHeights(h1, n1, cumulative1);
-    computeCumulativeHeights(h2, n2, cumulative2);
-    computeCumulativeHeights(h3, n3, cumulative3);
+    
+    auto it1 = h1.begin(), it2 = h2.begin(), it3 = h3.begin();
 
-    // Use a set to store heights from the first stack
-    int *set = (int *)malloc(MAX_SIZE * sizeof(int));
-    int setSize = 0;
+    
+    while (it1 != h1.end() && it2 != h2.end() && it3 != h3.end()) {
+       
+        if (h1Sum == h2Sum && h2Sum == h3Sum) {
+            return h1Sum;
+        }
 
-    for (i = 0; i < n1; i++) {
-        set[setSize++] = cumulative1[i];
-    }
-
-    // Find the maximum height that is common in all three stacks
-    for (i = 0; i < n2; i++) {
-        for (j = 0; j < setSize; j++) {
-            if (cumulative2[i] == set[j]) {
-                for (int k = 0; k < n3; k++) {
-                    if (cumulative3[k] == cumulative2[i]) {
-                        if (cumulative2[i] > maxHeight) {
-                            maxHeight = cumulative2[i];
-                        }
-                    }
-                }
-            }
+        
+        if (h1Sum >= h2Sum && h1Sum >= h3Sum) {
+            h1Sum -= *it1++;
+        } else if (h2Sum >= h1Sum && h2Sum >= h3Sum) {
+            h2Sum -= *it2++;
+        } else {
+            h3Sum -= *it3++;
         }
     }
 
-    free(set);
-    return maxHeight;
+    
+    return 0;
 }
 
 int main() {
     int n1, n2, n3;
-    scanf("%d %d %d", &n1, &n2, &n3);
+    cin >> n1 >> n2 >> n3;
 
-    int *h1 = (int *)malloc(n1 * sizeof(int));
-    int *h2 = (int *)malloc(n2 * sizeof(int));
-    int *h3 = (int *)malloc(n3 * sizeof(int));
+    vector<int> h1(n1), h2(n2), h3(n3);
 
-    for (int i = 0; i < n1; i++) {
-        scanf("%d", &h1[i]);
+    for (int i = 0; i < n1; ++i) {
+        cin >> h1[i];
+    }
+    for (int i = 0; i < n2; ++i) {
+        cin >> h2[i];
+    }
+    for (int i = 0; i < n3; ++i) {
+        cin >> h3[i];
     }
 
-    for (int i = 0; i < n2; i++) {
-        scanf("%d", &h2[i]);
-    }
-
-    for (int i = 0; i < n3; i++) {
-        scanf("%d", &h3[i]);
-    }
-
-    printf("%d\n", equalStacks(h1, n1, h2, n2, h3, n3));
-
-    free(h1);
-    free(h2);
-    free(h3);
+    int result = equalStacks(h1, h2, h3);
+    cout << result << endl;
 
     return 0;
 }
@@ -742,95 +720,84 @@ q4)
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_STACK_SIZE 100000
+#define MAX_CAPACITY 100000
 
-// Define a stack structure
 typedef struct {
-    char *data;
-    int top;
-    int capacity;
-} Stack;
+    char *elements;
+    int topIndex;
+    int maxSize;
+} CharStack;
 
-// Initialize the stack
-void initStack(Stack *stack, int capacity) {
-    stack->capacity = capacity;
-    stack->top = -1;
-    stack->data = (char *)malloc(capacity * sizeof(char));
+void initializeStack(CharStack *stack, int size) {
+    stack->maxSize = size;
+    stack->topIndex = -1;
+    stack->elements = (char *)malloc(size * sizeof(char));
 }
 
-// Push to stack
-void push(Stack *stack, char value) {
-    if (stack->top < stack->capacity - 1) {
-        stack->data[++(stack->top)] = value;
+void pushToStack(CharStack *stack, char element) {
+    if (stack->topIndex < stack->maxSize - 1) {
+        stack->elements[++(stack->topIndex)] = element;
     }
 }
 
-// Pop from stack
-char pop(Stack *stack) {
-    if (stack->top >= 0) {
-        return stack->data[(stack->top)--];
+char popFromStack(CharStack *stack) {
+    if (stack->topIndex >= 0) {
+        return stack->elements[(stack->topIndex)--];
     }
-    return '\0'; // Return null character if stack is empty
+    return '\0'; 
 }
 
-// Peek top of stack
-char peek(Stack *stack) {
-    if (stack->top >= 0) {
-        return stack->data[stack->top];
+char topOfStack(CharStack *stack) {
+    if (stack->topIndex >= 0) {
+        return stack->elements[stack->topIndex];
     }
-    return '\0'; // Return null character if stack is empty
+    return '\0'; 
 }
 
-// Check if stack is empty
-int isEmpty(Stack *stack) {
-    return stack->top == -1;
+int isStackEmpty(CharStack *stack) {
+    return stack->topIndex == -1;
 }
 
-// Function to check if the bracket string is balanced
-char *isBalanced(const char *s) {
-    Stack stack;
-    initStack(&stack, strlen(s));
+const char *checkBalanced(const char *input) {
+    CharStack stack;
+    initializeStack(&stack, strlen(input));
     
-    for (int i = 0; s[i] != '\0'; i++) {
-        char c = s[i];
-        if (c == '(' || c == '{' || c == '[') {
-            push(&stack, c);
+    for (int i = 0; input[i] != '\0'; i++) {
+        char currentChar = input[i];
+        if (currentChar == '(' || currentChar == '{' || currentChar == '[') {
+            pushToStack(&stack, currentChar);
         } else {
-            if (isEmpty(&stack)) {
-                free(stack.data);
+            if (isStackEmpty(&stack)) {
+                free(stack.elements);
                 return "NO";
             }
-            char top = pop(&stack);
-            if ((c == ')' && top != '(') ||
-                (c == '}' && top != '{') ||
-                (c == ']' && top != '[')) {
-                free(stack.data);
+            char topChar = popFromStack(&stack);
+            if ((currentChar == ')' && topChar != '(') ||
+                (currentChar == '}' && topChar != '{') ||
+                (currentChar == ']' && topChar != '[')) {
+                free(stack.elements);
                 return "NO";
             }
         }
     }
     
-    if (isEmpty(&stack)) {
-        free(stack.data);
-        return "YES";
-    } else {
-        free(stack.data);
-        return "NO";
-    }
+    const char *result = isStackEmpty(&stack) ? "YES" : "NO";
+    free(stack.elements);
+    return result;
 }
 
 int main() {
-    int n;
-    scanf("%d", &n);
-    getchar(); // Consume the newline character after the integer input
+    int testCount;
+    scanf("%d", &testCount);
+    getchar(); 
 
-    for (int i = 0; i < n; i++) {
-        char s[100000];
-        fgets(s, sizeof(s), stdin);
-        // Remove newline character if present
-        s[strcspn(s, "\n")] = '\0';
+    for (int i = 0; i < testCount; i++) {
+        char expression[100000];
+        fgets(expression, sizeof(expression), stdin);
+       
+        expression[strcspn(expression, "\n")] = '\0';
         
-        printf("%s\n", isBalanced(s));
+        printf("%s\n", checkBalanced(expression));
     }
 
     return 0;
