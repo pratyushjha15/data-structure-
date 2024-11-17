@@ -893,3 +893,314 @@ int main() {
     free(heights);
     return 0;
 }
+
+###############################################################
+QUEUE
+###############################################################
+
+q1) 
+
+#include <stdio.h>
+
+#define MAX_SIZE 100000
+
+
+typedef struct {
+    int arr[MAX_SIZE];
+    int top;
+} Stack;
+
+void initStack(Stack *stack) {
+    stack->top = -1;
+}
+
+int isEmpty(Stack *stack) {
+    return stack->top == -1;
+}
+
+void push(Stack *stack, int data) {
+    stack->arr[++stack->top] = data;
+}
+
+int pop(Stack *stack) {
+    return stack->arr[stack->top--];
+}
+
+int peek(Stack *stack) {
+    return stack->arr[stack->top];
+}
+
+
+typedef struct {
+    Stack s1, s2;
+} Queue;
+
+void initQueue(Queue *queue) {
+    initStack(&queue->s1);
+    initStack(&queue->s2);
+}
+
+void enqueue(Queue *queue, int data) {
+    push(&queue->s1, data);
+}
+
+void transfer(Stack *s1, Stack *s2) {
+    while (!isEmpty(s1)) {
+        push(s2, pop(s1));
+    }
+}
+
+void dequeue(Queue *queue) {
+    if (isEmpty(&queue->s2)) {
+        transfer(&queue->s1, &queue->s2);
+    }
+    if (!isEmpty(&queue->s2)) {
+        pop(&queue->s2);
+    }
+}
+
+void printFront(Queue *queue) {
+    if (isEmpty(&queue->s2)) {
+        transfer(&queue->s1, &queue->s2);
+    }
+    if (!isEmpty(&queue->s2)) {
+        printf("%d\n", peek(&queue->s2));
+    }
+}
+
+int main() {
+    Queue queue;
+    initQueue(&queue);
+
+    int q;
+    scanf("%d", &q);
+
+    while (q--) {
+        int type;
+        scanf("%d", &type);
+
+        if (type == 1) {
+            int x;
+            scanf("%d", &x);
+            enqueue(&queue, x);
+        } else if (type == 2) {
+            dequeue(&queue);
+        } else if (type == 3) {
+            printFront(&queue);
+        }
+    }
+
+    return 0;
+}
+
+q5)  down to zero  
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+// Structure for queue node
+typedef struct Node {
+    int value;
+    int moves;
+    struct Node* next;
+} Node;
+
+// Queue structure to perform BFS
+typedef struct Queue {
+    Node* front;
+    Node* rear;
+} Queue;
+
+// Function to create a new node for the queue
+Node* createNode(int value, int moves) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->value = value;
+    newNode->moves = moves;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Function to initialize the queue
+Queue* createQueue() {
+    Queue* queue = (Queue*)malloc(sizeof(Queue));
+    queue->front = queue->rear = NULL;
+    return queue;
+}
+
+// Function to enqueue a value to the queue
+void enqueue(Queue* queue, int value, int moves) {
+    Node* newNode = createNode(value, moves);
+    if (queue->rear == NULL) {
+        queue->front = queue->rear = newNode;
+        return;
+    }
+    queue->rear->next = newNode;
+    queue->rear = newNode;
+}
+
+// Function to dequeue a value from the queue
+Node* dequeue(Queue* queue) {
+    if (queue->front == NULL)
+        return NULL;
+    Node* temp = queue->front;
+    queue->front = queue->front->next;
+    if (queue->front == NULL)
+        queue->rear = NULL;
+    return temp;
+}
+
+// Function to perform BFS and find the minimum number of moves to reduce N to 0
+int minMoves(int N) {
+    // Queue to store the (value, number_of_moves)
+    Queue* queue = createQueue();
+    enqueue(queue, N, 0);
+
+    // Array to track visited values
+    int visited[100001] = {0};
+    visited[N] = 1;
+
+    while (queue->front != NULL) {
+        Node* currentNode = dequeue(queue);
+        int current = currentNode->value;
+        int moves = currentNode->moves;
+        free(currentNode);
+
+        // If we've reached 0, return the number of moves
+        if (current == 0)
+            return moves;
+
+        // Operation 1: Try to factorize current N
+        for (int i = 2; i <= (int)sqrt(current); i++) {
+            if (current % i == 0) {
+                int new_value = current / i > i ? current / i : i; // max(a, b)
+                if (!visited[new_value]) {
+                    visited[new_value] = 1;
+                    enqueue(queue, new_value, moves + 1);
+                }
+            }
+        }
+
+        // Operation 2: Decrement current N by 1
+        if (current - 1 >= 0 && !visited[current - 1]) {
+            visited[current - 1] = 1;
+            enqueue(queue, current - 1, moves + 1);
+        }
+    }
+
+    return -1; // Should never reach here
+}
+
+int main() {
+    int Q, N;
+
+    // Input number of queries
+    scanf("%d", &Q);
+
+    while (Q--) {
+        // Input each query value N
+        scanf("%d", &N);
+
+        // Compute and output the minimum number of moves for this query
+        printf("%d\n", minMoves(N));
+    }
+
+    return 0;
+}
+
+ q )   queue using 2 stack 
+
+#include <stdio.h>
+
+#define MAX_SIZE 100000
+
+
+typedef struct {
+    int arr[MAX_SIZE];
+    int top;
+} Stack;
+
+void initStack(Stack *stack) {
+    stack->top = -1;
+}
+
+int isEmpty(Stack *stack) {
+    return stack->top == -1;
+}
+
+void push(Stack *stack, int data) {
+    stack->arr[++stack->top] = data;
+}
+
+int pop(Stack *stack) {
+    return stack->arr[stack->top--];
+}
+
+int peek(Stack *stack) {
+    return stack->arr[stack->top];
+}
+
+
+typedef struct {
+    Stack s1, s2;
+} Queue;
+
+void initQueue(Queue *queue) {
+    initStack(&queue->s1);
+    initStack(&queue->s2);
+}
+
+void enqueue(Queue *queue, int data) {
+    push(&queue->s1, data);
+}
+
+void transfer(Stack *s1, Stack *s2) {
+    while (!isEmpty(s1)) {
+        push(s2, pop(s1));
+    }
+}
+
+void dequeue(Queue *queue) {
+    if (isEmpty(&queue->s2)) {
+        transfer(&queue->s1, &queue->s2);
+    }
+    if (!isEmpty(&queue->s2)) {
+        pop(&queue->s2);
+    }
+}
+
+void printFront(Queue *queue) {
+    if (isEmpty(&queue->s2)) {
+        transfer(&queue->s1, &queue->s2);
+    }
+    if (!isEmpty(&queue->s2)) {
+        printf("%d\n", peek(&queue->s2));
+    }
+}
+
+int main() {
+    Queue queue;
+    initQueue(&queue);
+
+    int q;
+    scanf("%d", &q);
+
+    while (q--) {
+        int type;
+        scanf("%d", &type);
+
+        if (type == 1) {
+            int x;
+            scanf("%d", &x);
+            enqueue(&queue, x);
+        } else if (type == 2) {
+            dequeue(&queue);
+        } else if (type == 3) {
+            printFront(&queue);
+        }
+    }
+
+    return 0;
+}
+
+q )   
